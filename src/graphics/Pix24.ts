@@ -111,7 +111,7 @@ export default class Pix24 extends DoublyLinkable {
         Pix2D.bind(this.pixels, this.width, this.height);
     }
 
-    draw(x: number, y: number): void {
+    drawTransparent(x: number, y: number): void {
         x |= 0;
         y |= 0;
 
@@ -157,11 +157,61 @@ export default class Pix24 extends DoublyLinkable {
         }
 
         if (w > 0 && h > 0) {
-            this.copyImageDraw(w, h, this.pixels, srcOff, srcStep, Pix2D.pixels, dstOff, dstStep);
+            this.copyImageBlitOpaque(w, h, this.pixels, srcOff, srcStep, Pix2D.pixels, dstOff, dstStep);
         }
     }
 
-    drawAlpha(alpha: number, x: number, y: number): void {
+    draw(x: number, y: number, target?: Int32Array): void {
+        x |= 0;
+        y |= 0;
+
+        x += this.cropX;
+        y += this.cropY;
+
+        let dstOff: number = x + y * Pix2D.width2d;
+        let srcOff: number = 0;
+
+        let h: number = this.height;
+        let w: number = this.width;
+
+        let dstStep: number = Pix2D.width2d - w;
+        let srcStep: number = 0;
+
+        if (y < Pix2D.top) {
+            const cutoff: number = Pix2D.top - y;
+            h -= cutoff;
+            y = Pix2D.top;
+            srcOff += cutoff * w;
+            dstOff += cutoff * Pix2D.width2d;
+        }
+
+        if (y + h > Pix2D.bottom) {
+            h -= y + h - Pix2D.bottom;
+        }
+
+        if (x < Pix2D.left) {
+            const cutoff: number = Pix2D.left - x;
+            w -= cutoff;
+            x = Pix2D.left;
+            srcOff += cutoff;
+            dstOff += cutoff;
+            srcStep += cutoff;
+            dstStep += cutoff;
+        }
+
+        if (x + w > Pix2D.right) {
+            const cutoff: number = x + w - Pix2D.right;
+            w -= cutoff;
+            srcStep += cutoff;
+            dstStep += cutoff;
+        }
+
+        if (w > 0 && h > 0) {
+            this.copyImageDraw(w, h, this.pixels, srcOff, srcStep, target ?? Pix2D.pixels, dstOff, dstStep);
+        }
+    }
+
+    drawAlpha(alpha: number, x: number, y: number, target?: Int32Array): void {
         x |= 0;
         y |= 0;
 
@@ -205,7 +255,7 @@ export default class Pix24 extends DoublyLinkable {
         }
 
         if (w > 0 && h > 0) {
-            this.copyPixelsAlpha(w, h, this.pixels, srcStep, srcOff, Pix2D.pixels, dstStep, dstOff, alpha);
+            this.copyPixelsAlpha(w, h, this.pixels, srcStep, srcOff, target ?? Pix2D.pixels, dstStep, dstOff, alpha);
         }
     }
 
@@ -549,7 +599,7 @@ export default class Pix24 extends DoublyLinkable {
         }
     }
 
-    private copyImageDraw(w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void {
+    public copyImageDraw(w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void {
         const qw: number = -(w >> 2);
         w = -(w & 0x3);
 

@@ -39,7 +39,12 @@ export default class PixMap {
         const paint: Uint32Array = this.paint;
         for (let i: number = 0; i < length; i++) {
             const pixel: number = pixels[i];
-            paint[i] = ((pixel >> 16) & 0xff) | (((pixel >> 8) & 0xff) << 8) | ((pixel & 0xff) << 16) | 0xff000000;
+            if (pixel === 0) {
+                paint[i] = 0;
+            }
+            else {
+                paint[i] = ((pixel >> 16) & 0xff) | (((pixel >> 8) & 0xff) << 8) | ((pixel & 0xff) << 16) | 0xff000000;
+            }
         }
     }
 }

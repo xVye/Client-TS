@@ -42,7 +42,7 @@ import { downloadUrl, sleep, arraycopy } from '#/util/JsUtil.js';
 
 import AnimBase from '#/graphics/AnimBase.js';
 import AnimFrame from '#/graphics/AnimFrame.js';
-import { canvas2d } from '#/graphics/Canvas.js';
+import { canvas2d, icon2d, iconCanvas } from '#/graphics/Canvas.js';
 import Colors from '#/graphics/Colors.js';
 import Pix2D from '#/graphics/Pix2D.js';
 import Pix3D from '#/graphics/Pix3D.js';
@@ -577,7 +577,7 @@ export class Client extends GameShell {
         ) {
             this.errorHost = true;
         }
-
+        
         this.run();
     }
 
@@ -956,6 +956,18 @@ export class Client extends GameShell {
                                 } else {
                                     icon.draw(slotX, slotY);
                                 }
+
+                                // Vye
+                                // icon2d.clearRect(0, 0, iconCanvas.width, iconCanvas.height);
+
+                                // const iconData = new Int32Array(Pix2D.pixels.length);
+                                // // const imgData = new ImageData(Pix2D.width2d, Pix2D.height2d);
+
+                                // // imgData.data.set(iconData);
+
+                                // const imgData = new ImageData(Pix2D.width2d, Pix2D.height2d);
+                                // imgData.data.set(Pix2D.pixels);
+                                // icon2d.putImageData(imgData, 0, 0);
 
                                 if (icon.cropW === 33 || child.invSlotObjCount[slot] !== 1) {
                                     const count: number = child.invSlotObjCount[slot];
@@ -1724,6 +1736,28 @@ export class Client extends GameShell {
             World3D.init(512, 334, 500, 800, distance);
             WordFilter.unpack(wordenc);
             this.initializeLevelExperience();
+
+            // Vye
+            icon2d.globalCompositeOperation = 'source-in';
+
+            let dx = 0;
+            let dy = 0;
+
+            for (let i = 0; i < ObjType.count; i++) {
+                if (dx >= iconCanvas.width) {
+                    dx = 0;
+                    dy += 32;
+                }
+
+                const temp = new PixMap(32, 32, icon2d);
+                const icon = ObjType.getIcon(i, 1);
+
+                temp.bind();
+                icon.draw(0, 0);
+                temp.draw(dx, dy);
+
+                dx += 32;
+            }
         } catch (err) {
             this.errorLoading = true;
 

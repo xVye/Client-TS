@@ -1,4 +1,4 @@
-import { canvas, canvas2d } from '#/graphics/Canvas.js';
+import { canvas, canvas2d, icon2d, iconCanvas } from '#/graphics/Canvas.js';
 import Pix3D from '#/graphics/Pix3D.js';
 import PixMap from '#/graphics/PixMap.js';
 
@@ -6,6 +6,9 @@ import { sleep } from '#/util/JsUtil.js';
 
 import { CanvasEnabledKeys, KeyCodes } from '#/client/KeyCodes.js';
 import InputTracking from '#/client/InputTracking.js';
+import ObjType from '#/config/ObjType';
+import Pix2D from '#/graphics/Pix2D';
+import type Pix24 from '#/graphics/Pix24';
 
 export default abstract class GameShell {
     protected slowestMS: number = 0.0; // custom
@@ -128,96 +131,37 @@ export default abstract class GameShell {
         await this.showProgress(0, 'Loading...');
         await this.load();
 
-        for (let i: number = 0; i < 10; i++) {
-            this.otim[i] = performance.now();
-        }
+        // if (!this.didDrawIcons) {
+        //     if (!this.didInitCanvas) {
+        //         this.didInitCanvas = true;
+        //         iconCanvas.width = 32 * 32;
+        //         iconCanvas.height = ObjType.count * 32 - iconCanvas.width + 32;
+        //     }
+        //     const temp: PixMap = new PixMap(32, 32, icon2d);
 
-        let ntime: number;
-        let opos: number = 0;
-        let ratio: number = 256;
-        let delta: number = 1;
-        let count: number = 0;
+        //     for (this._i; this._i < ObjType.count; this._i++) {
+        //         if (this._i === ObjType.count - 1) {
+        //             this.didDrawIcons = true;
+        //         }
 
-        while (this.state >= 0) {
-            if (this.state > 0) {
-                this.state--;
+        //         if (32 + this.iconDx >= iconCanvas.width) {
+        //             this.iconDx = 0;
+        //             this.iconDy += 32;
+        //         }
 
-                if (this.state === 0) {
-                    this.shutdown();
-                    return;
-                }
-            }
+        //         const icon: Pix24 = ObjType.getIcon(this._i, 1);
 
-            const lastRatio: number = ratio;
-            const lastDelta: number = delta;
-            ratio = 300;
-            delta = 1;
+        //         temp.bind();
+        //         icon.draw(this.iconDx, this.iconDy);
+        //         temp.draw(this.iconDx, this.iconDy);
 
-            ntime = performance.now();
-            const otim: number = this.otim[opos];
+        //         this.iconDx += 32;
+        //     }
+        // }
 
-            if (otim === 0) {
-                ratio = lastRatio;
-                delta = lastDelta;
-            } else if (ntime > otim) {
-                ratio = ((this.deltime * 2560) / (ntime - otim)) | 0;
-            }
+        return;
 
-            if (ratio < 25) {
-                ratio = 25;
-            } else if (ratio > 256) {
-                ratio = 256;
-                delta = (this.deltime - (ntime - otim) / 10) | 0;
-            }
 
-            this.otim[opos] = ntime;
-            opos = (opos + 1) % 10;
-
-            if (delta > 1) {
-                for (let i: number = 0; i < 10; i++) {
-                    if (this.otim[i] !== 0) {
-                        this.otim[i] += delta;
-                    }
-                }
-            }
-
-            if (delta < this.mindel) {
-                delta = this.mindel;
-            }
-
-            await sleep(delta);
-
-            while (count < 256) {
-                await this.update();
-                this.mouseClickButton = 0;
-                this.keyQueueReadPos = this.keyQueueWritePos;
-                count += ratio;
-            }
-
-            count &= 0xff;
-
-            if (this.deltime > 0) {
-                this.fps = ((ratio * 1000) / (this.deltime * 256)) | 0;
-            }
-
-            const time: number = performance.now();
-
-            await this.draw();
-
-            this.frameTime[this.fpos] = (performance.now() - time) / 1000;
-            this.fpos = (this.fpos + 1) % this.frameTime.length;
-
-            // this is custom for targeting specific fps (on mobile).
-            if (this.tfps < 50) {
-                const tfps: number = 1000 / this.tfps - (performance.now() - ntime);
-                if (tfps > 0) {
-                    await sleep(tfps);
-                }
-            }
-        }
-        if (this.state === -1) {
-            this.shutdown();
-        }
     }
 
     protected shutdown() {
